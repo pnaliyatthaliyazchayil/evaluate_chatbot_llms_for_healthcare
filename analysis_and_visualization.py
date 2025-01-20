@@ -177,11 +177,6 @@ final_df.to_csv(output_file_path, index=False)
 This section demonstrates how comparitive analysis was conducted between for less and more sick atients for LLM responses.
 '''
 
-#Count the number of ICD codes in the 'icd9_codes' column
-# We count the commas and add 1 (as the number of ICD codes is one more than the number of commas)
-final_df['num_icd_codes'] = final_df['icd9_codes'].str.count(',') + 1
-
-
 from scipy import stats
 
 #Calculate the z-scores of the 'num_icd_codes' column. The z-score standardizes the values based on the dataset's mean and standard deviation.if the z-score is greater than 0, it means the subject has an above-average number of ICD codes, and you categorize them as "more sick".
@@ -215,8 +210,8 @@ from collections import Counter
 
 #Split the 'icd9_codes' column into individual codes
 # Remove any leading or trailing whitespace from the codes
-df_final['icd9_codes'] = df_final['icd9_codes'].fillna('')  # Ensure no NaN values
-all_codes = df_final['icd9_codes'].str.split(',').explode().str.strip()
+final_df['icd9_codes'] = final_df['icd9_codes'].fillna('')  # Ensure no NaN values
+all_codes = final_df['icd9_codes'].str.split(',').explode().str.strip()
 
 #Count the occurrences of each individual ICD-9 code
 code_counts = Counter(all_codes)
