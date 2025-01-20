@@ -390,41 +390,9 @@ print(df_final_with_all_analysis['icd_match_check'].unique())
 
 
 '''
-This section demonstrates the F1 score calculation
+This section demonstrates the F1 score calculation for Multiclass Multilabel data
 '''
-#icd9 codes f1 score; F1 Score: 0.0185 
-
-def calculate_f1(row):
-    # Split the comma-separated values into sets
-    ground_truth = set(row['converted_icd_code'].split(",")) if pd.notna(row['converted_icd_code']) else set()
-    predicted = set(row['icd9_codes'].split(",")) if pd.notna(row['icd9_codes']) else set()
-    
-    # Calculate True Positives, False Positives, and False Negatives
-    tp = len(ground_truth & predicted)  # Intersection: True Positives
-    fp = len(predicted - ground_truth)  # Predicted but not in ground truth: False Positives
-    fn = len(ground_truth - predicted)  # Ground truth but not predicted: False Negatives
-    
-    # Calculate Precision and Recall
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    
-    # Calculate F1 Score
-    f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0
-    return f1
-
-# Apply the F1 score calculation row-wise
-df_final_with_all_analysis['f1_score'] = df_final_with_all_analysis.apply(calculate_f1, axis=1)
-
-# Calculate the overall average F1 score
-overall_f1 = df_final_with_all_analysis['f1_score'].mean()
-
-# Print the results
-print(df_final_with_all_analysis[['converted_icd_code', 'icd9_codes', 'f1_score']])
-print(f"Overall F1 Score: {overall_f1}")
-
-
-#readmission f1 score
-#F1 Score for Readmission Prediction: F1 Score for low: 0.4516, F1 Score for medium: 0.3939, F1 Score for high: 0.3913, Macro-average F1 Score: 0.4123
+#F1 Score for Readmission Prediction: 
 
 from sklearn.metrics import precision_recall_fscore_support
 
@@ -451,92 +419,118 @@ for category, f1_score in zip(['low', 'medium', 'high'], f1):
 macro_f1 = precision_recall_fscore_support(ground_truths, predictions, labels=['low', 'medium', 'high'], average='macro')[2]
 print(f"Macro-average F1 Score: {macro_f1:.4f}")
 
-#-----------------------------------------------------these can be removed. these were for testing which script is correct--------------------------
+#f1 score for icd-9 code prediction
 
-from sklearn.metrics import f1_score
+import numpy as np
+from sklearn.metrics import multilabel_confusion_matrix
 
-def calculate_f1_with_sklearn(row):
-    # Split the  comma-separated values into sets
-    ground_truth = set(map(str.strip, str(row['converted_icd_code']).split(","))) if pd.notna(row['converted_icd_code']) else set()
-    predicted = set(map(str.strip, str(row['icd9_codes']).split(","))) if pd.notna(row['icd9_codes']) else set()
+# Step 1: Split the comma-separated strings into lists
+df_final_with_all_analysis['icd9_codes'] = df_final_with_all_analysis['icd9_codes'].apply(lambda x: [i.strip() for i in str(x).split(',')])
+df_final_with_all_analysis['converted_icd_code'] = df_final_with_all_analysis['converted_icd_code'].apply(lambda x: [i.strip() for i in str(x).split(',')])
 
-    
-    # Union of all labels in the current row
-    all_labels = sorted(ground_truth | predicted)
-    
-    # Binary indicator vectors for ground truth and predicted
-    ground_truth_binary = [1 if label in ground_truth else 0 for label in all_labels]
-    predicted_binary = [1 if label in predicted else 0 for label in all_labels]
-    
-    # Calculate F1 score for the row- Each ICD-9 code in a row is treated as a label, forming a multi-label scenario.
-    #For weighted averaging, the F1 score for each label (tp, tn, fp, fn) is calculated separately under the hood and 
-    #then combined using weights proportional to the number of true instances of each label in the ground truth.
-    f1 = f1_score(ground_truth_binary, predicted_binary, average='weighted')  
-    return f1
+# Step 2: Get all unique ICD codes in the ground truth (only use the true labels for comparison)
+all_labels = set().union(*df_final_with_all_analysis['converted_icd_code'])
 
-# Applying the F1 score calculation row-wise
-df_final_with_all_analysis['f1_score'] = df_final_with_all_analysis.apply(calculate_f1_with_sklearn, axis=1)
+# Step 3: Create binary indicator matrices for ground truths and predictions
+label_to_index = {label: i for i, label in enumerate(all_labels)}
+y_true = np.zeros((len(df_final_with_all_analysis), len(all_labels)), dtype=int)
+y_pred = np.zeros((len(df_final_with_all_analysis), len(all_labels)), dtype=int)
 
-# Calculating the overall weighted-average F1 score across all rows
-overall_f1 = df_final_with_all_analysis['f1_score'].mean()
+# Fill in y_true and y_pred matrices based on ground_truth_icd and llama_predicted_icd
+for i, (true_labels, pred_labels) in enumerate(zip(df_final_with_all_analysis['converted_icd_code'], df_final_with_all_analysis['icd9_codes'])):
+    for label in true_labels:
+        y_true[i, label_to_index[label]] = 1
+    for label in pred_labels:
+        # Only mark as predicted if the label is in the ground truth set (for comparison)
+        if label in label_to_index:
+            y_pred[i, label_to_index[label]] = 1
 
-print(df_final_with_all_analysis[['converted_icd_code', 'icd9_codes', 'f1_score']])
-df_results = df_final_with_all_analysis[['converted_icd_code', 'icd9_codes', 'f1_score']]
+# Step 4: Calculate multilabel confusion matrices
+conf_matrix = multilabel_confusion_matrix(y_true, y_pred)
 
-print(f"Overall Weighted-Average F1 Score: {overall_f1:.4f}")
+# Initialize lists to store metrics
+Diagnosis_list = []
+Precision_list = []
+Recall_list = []
+F1_list = []
+Support_list = []
+TTP, TTN, TFP, TFN = [], [], [], []
 
-from sklearn.metrics import f1_score
+# Step 5: Calculate per-class metrics
+for label, conf in zip(all_labels, conf_matrix):
+    TP = conf[1, 1]
+    TN = conf[0, 0]
+    FP = conf[0, 1]
+    FN = conf[1, 0]
+    TTP.append(TP)
+    TTN.append(TN)
+    TFP.append(FP)
+    TFN.append(FN)
 
-# Step 1: Extract all unique labels (ICD-9 codes) from the dataset
-all_labels = sorted(
-    set(
-        icd.strip()
-        for icd_list in df_final_with_all_analysis['converted_icd_code'].dropna().tolist() +
-        df_final_with_all_analysis['icd9_codes'].dropna().tolist()
-        for icd in str(icd_list).split(",")
-    )
-)
+    # Avoid division by zero
+    Precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    Recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+    F1 = (2 * Precision * Recall / (Precision + Recall)) if (Precision + Recall) > 0 else 0
 
-# Step 2: Define the function to calculate F1 score with the `labels` parameter
-def calculate_f1_with_sklearn(row, labels):
-    # Split the comma-separated values into sets
-    ground_truth = set(map(str.strip, str(row['converted_icd_code']).split(","))) if pd.notna(row['converted_icd_code']) else set()
-    predicted = set(map(str.strip, str(row['icd9_codes']).split(","))) if pd.notna(row['icd9_codes']) else set()
+    Diagnosis_list.append(label)
+    Precision_list.append(Precision)
+    Recall_list.append(Recall)
+    F1_list.append(F1)
+    Support_list.append(np.sum(y_true[:, label_to_index[label]]))
 
-    # Union of all labels in the current row
-    all_labels_row = sorted(ground_truth | predicted)
-    
-    # Binary indicator vectors for ground truth and predicted
-    ground_truth_binary = [1 if label in ground_truth else 0 for label in labels]
-    predicted_binary = [1 if label in predicted else 0 for label in labels]
-    
-    # Calculate F1 score for the rowall
-    f1 = f1_score(ground_truth_binary, predicted_binary, average='weighted', labels=all_labels)
-    return f1
+# Step 6: Create a DataFrame for per-class metrics
+per_class_metrics = pd.DataFrame({
+    'Diagnosis': Diagnosis_list,
+    'Precision': Precision_list,
+    'Recall': Recall_list,
+    'F1 Score': F1_list,
+    'Support': Support_list
+})
+print("Per-Class Metrics:")
+print(per_class_metrics)
 
-# Step 3: Apply the F1 score calculation row-wise using the global set of labels
-df_final_with_all_analysis['f1_score'] = df_final_with_all_analysis.apply(
-    calculate_f1_with_sklearn,
-    axis=1,
-    labels=all_labels  # Pass the global set of labels
-)
+# Step 7: Calculate aggregate metrics
+Precision_list, Recall_list, F1_list, Support_list = [], [], [], []
+list_section = ['micro avg', 'macro avg', 'weighted avg']
 
-# Step 4: Calculate the overall weighted-average F1 score across all rows
-overall_f1 = df_final_with_all_analysis['f1_score'].mean()
+for section in list_section:
+    if section == 'micro avg':
+        TP = sum(TTP)
+        FP = sum(TFP)
+        FN = sum(TFN)
+        Precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+        Recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+        F1 = (2 * Precision * Recall / (Precision + Recall)) if (Precision + Recall) > 0 else 0
+        Support = np.sum(Support_list)
 
-# Display the results
-print(df_final_with_all_analysis[['converted_icd_code', 'icd9_codes', 'f1_score']])
-print(f"Overall Weighted-Average F1 Score: {overall_f1:.4f}")
+    elif section == 'macro avg':
+        Precision = np.mean(Precision_list)
+        Recall = np.mean(Recall_list)
+        F1 = np.mean(F1_list)
+        Support = np.sum(Support_list)
 
+    elif section == 'weighted avg':
+        total_support = np.sum(Support_list)
+        if total_support > 0:
+            Precision = np.sum(np.array(Precision_list) * np.array(Support_list)) / total_support
+            Recall = np.sum(np.array(Recall_list) * np.array(Support_list)) / total_support
+            F1 = np.sum(np.array(F1_list) * np.array(Support_list)) / total_support
+        else:
+            Precision, Recall, F1 = 0, 0, 0  # Handle division by zero case
+        Support = np.sum(Support_list)
 
+    Precision_list.append(Precision)
+    Recall_list.append(Recall)
+    F1_list.append(F1)
+    Support_list.append(Support)
 
-
-
-
-
-
-
-
-
-
-
+# Step 8: Create a DataFrame for aggregate metrics
+aggregate_metrics = pd.DataFrame({
+    'Section': list_section,
+    'Precision': Precision_list,
+    'Recall': Recall_list,
+    'F1 Score': F1_list,
+    'Support': Support_list
+})
+print("Aggregate Metrics:")
+print(aggregate_metrics)
