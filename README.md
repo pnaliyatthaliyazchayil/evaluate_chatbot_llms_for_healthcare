@@ -12,3 +12,14 @@ In this repository the following scripts can be found
 MIMIC-IV data files are not provided here as they are restricted access file thta cannot be made accessed publically. Once you have access to those files, these scripts can be used to re-create the analysis.
 
 By comparing the performance of these models in healthcare contexts, this study provides valuable insights into their strengths, limitations, and potential for future use in clinical decision-making
+
+## License
+This project is licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). See the [LICENSE](LICENSE) file for more details.
+
+## Cite This Repo
+
+If you are referencing this repository in your work, please use the following citation format:
+
+> [Parvati Naliyatthaliyazchayil, Raajitha Muthyala, Saptarshi Purkayastha, Judy Gichoya]. (2025). *Work currently under review by Journal*. Retrieved from: https://github.com/pnaliyatthaliyazchayil/evaluate_chatbot_llms_for_healthcare
+
+>Once the paper is published, we will update this citation with the final reference.
