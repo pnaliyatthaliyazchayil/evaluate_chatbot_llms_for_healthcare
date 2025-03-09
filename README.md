@@ -1,8 +1,8 @@
 # evaluate_chatbot_llms_for_healthcare
 
-The rapid adoption of large language models (LLMs) through chatbots has opened up new possibilities in healthcare, with leading models like ChatGPT, LLaMA, and Gemini offering AI-driven support. Despite their potential, the literature presents mixed reviews on the effectiveness of LLMs in healthcare—highlighting both promising capabilities and challenges in certain applications.
+The rapid adoption of large language models (LLMs) through chatbots has opened up new possibilities in healthcare, offering AI-driven support. Despite their potential, the literature presents mixed reviews on the effectiveness of LLMs in healthcare—highlighting both promising capabilities and challenges in certain applications.
 
-So we conducted a study using MIMIC-IV data  systematically compares the performance of three prominent LLMs—ChatGPT-4, LLaMA-3.1, and Gemini-1.5—across critical healthcare tasks. Specifically, we assess their ability to generate primary diagnoses, map diagnoses to ICD-9 codes, and predict risk stratification for hospital readmissions. We also evaluate the models’ reasoning capabilities, focusing on their ability to explain the rationale behind their diagnoses and readmission predictions.
+So we conducted a study using MIMIC-IV data  systematically compares the performance of  the LLMs in critical healthcare tasks. Specifically, we assess their ability to generate primary diagnoses, map diagnoses to ICD-9 codes, and predict risk stratification for hospital readmissions. We also evaluate the models’ reasoning capabilities, focusing on their ability to explain the rationale behind their diagnoses and readmission predictions.
 
 In this repository the following scripts can be found
 1. **mimic_sampling_and_prompt_creation.py**- This py file shows how the sample of 300 subject_ids were created- 150 subjects with >1 admission and the rest 150 have no redamission. Once sampling is complete, the key sections of structured clinical note s are extraced abd they are tsringed together programatically to create prompt
