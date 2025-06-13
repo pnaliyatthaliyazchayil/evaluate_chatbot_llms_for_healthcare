@@ -13,13 +13,16 @@ MIMIC-IV data files are not provided here as they are restricted access file tht
 
 By comparing the performance of these models in healthcare contexts, this study provides valuable insights into their strengths, limitations, and potential for future use in clinical decision-making
 
-## License
-This project is licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). See the [LICENSE](LICENSE) file for more details.
-
 ## Cite This Repo
 
-If you are referencing this repository in its prepint state, please use the following citation:
+If you are referencing this repository, please use the following citation:
 
-> Naliyatthaliyazchayil, Parvati and Muthyala, Raajitha and Purkayastha, Saptarshi and Gichoya, Judy Wawira, Evaluating Reasoning Capabilities of Large Language Models for Medical Coding and Hospital Readmission Risk Stratification with Zero Shot Prompting. Available at SSRN: https://ssrn.com/abstract=5172464 or http://dx.doi.org/10.2139/ssrn.5172464
+Naliyatthaliyazchayil P, Muthyala R, Gichoya JW, Purkayastha S
 
->Once the paper is published, we will update this citation with the final citation.
+Evaluating the Reasoning Capabilities of Large Language Models for Medical Coding and Hospital Readmission Risk Stratification: A Zero-Shot Prompting Approach
+
+Journal of Medical Internet Research. 10/06/2025:74142 (forthcoming/in press)
+
+DOI: 10.2196/74142
+
+URL: https://preprints.jmir.org/preprint/74142.
